@@ -21,15 +21,15 @@ const RocketLaunchIcon = () => (
 const steps = [
     {
         icon: <FolderIcon />,
-        title: "Clone the Repository",
-        description: "Get the toolkit from GitHub",
-        code: "git clone https://github.com/vudovn/antigravity-kit.git",
+        title: "Navigate to Your Project",
+        description: "Open terminal in your project directory",
+        code: "cd your-project",
     },
     {
         icon: <CommandLineIcon />,
-        title: "Copy to Your Project",
-        description: "Add the .agent folder to your workspace",
-        code: "cp -r antigravity-kit/.agent your-project/",
+        title: "Install with NPX",
+        description: "Run the CLI to install .agent folder",
+        code: "npx @vudovn/antigravity-kit init",
     },
     {
         icon: <RocketLaunchIcon />,

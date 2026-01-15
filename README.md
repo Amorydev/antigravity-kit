@@ -11,7 +11,6 @@
 ## 📋 Table of Contents
 
 - [Introduction](#-introduction)
-- [Project Structure](#-project-structure)
 - [Skills](#-skills)
 - [Rules](#-rules)
 - [Workflows](#-workflows)
@@ -35,46 +34,6 @@ This toolkit combines the best of:
 - 🛠️ **[ClaudeKit](https://claudekit.cc/)** - Production-ready AI subagents, workflows, and integrations
 
 Designed to integrate with AI agents supporting the **Agent Skills** standard.
-
----
-
-## 📁 Project Structure
-
-```
-antigravity-kit/
-├── .agent/
-│   ├── rules/              # 10 rule files
-│   │   ├── 01-identity.md
-│   │   ├── 02-task-classification.md
-│   │   ├── 03-mode-consulting.md
-│   │   ├── 04-mode-build.md
-│   │   ├── 05-mode-debug.md
-│   │   ├── 06-mode-optimize.md
-│   │   ├── 07-technical-standards.md
-│   │   ├── 08-communication.md
-│   │   ├── 09-checklist.md
-│   │   └── 10-special-situations.md
-│   │
-│   ├── skills/             # 35+ domain expertise
-│   │   ├── react-expert/
-│   │   ├── nextjs-expert/
-│   │   ├── typescript-expert/
-│   │   ├── prisma-expert/
-│   │   ├── auth-expert/
-│   │   ├── ui-ux-pro-max/
-│   │   └── ...
-│   │
-│   ├── .shared/            # Shared resources
-│   │   └── ui-ux-pro-max/  # UI/UX search database
-│   │       ├── data/       # CSV databases
-│   │       └── scripts/    # Python search tools
-│   │
-│   └── workflows/          # Step-by-step procedures
-│       ├── request.md
-│       └── ui-ux-pro-max.md
-│
-└── README.md               # This file
-```
 
 ---
 
@@ -186,16 +145,16 @@ Install the `.agent` folder directly into your project using `npx`:
 cd your-project
 
 # Install .agent folder
-npx antigravity-kit-cli init
+npx @vudovn/antigravity-kit init
 ```
 
 #### CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `npx antigravity-kit-cli init` | Install `.agent` folder into current directory |
-| `npx antigravity-kit-cli update` | Update `.agent` to the latest version |
-| `npx antigravity-kit-cli status` | Check installation status |
+| `npx @vudovn/antigravity-kit init` | Install `.agent` folder into current directory |
+| `npx @vudovn/antigravity-kit update` | Update `.agent` to the latest version |
+| `npx @vudovn/antigravity-kit status` | Check installation status |
 
 ---
 
@@ -222,7 +181,7 @@ Rules apply based on activation type:
 Invoke workflows with slash commands:
 
 ```
-User: /ui-ux-pro-max
+User: Prompt
 Agent: (follows the workflow)
 ```
 

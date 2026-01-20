@@ -1,6 +1,6 @@
 # Mobile Performance Reference
 
-> Deep dive into React Native and Flutter performance optimization, 60fps animations, memory management, and battery considerations.
+> Deep dive into React Native, Flutter, Jetpack Compose and Kotlin Multiplatform performance optimization, 60fps animations, memory management, and battery considerations.
 > **This file covers the #1 area where AI-generated code FAILS.**
 
 ---
@@ -36,7 +36,6 @@ If your code takes longer:
 ## 2. React Native Performance
 
 ### 🚫 The #1 AI Mistake: ScrollView for Lists
-
 ```javascript
 // ❌ NEVER DO THIS - AI's favorite mistake
 <ScrollView>
@@ -60,7 +59,6 @@ If your code takes longer:
 ```
 
 ### FlatList Optimization Checklist
-
 ```javascript
 // ✅ CORRECT: All optimizations applied
 
@@ -120,7 +118,6 @@ const getItemLayout = useCallback(
 | `windowSize` | Memory usage | 🟢 Medium |
 
 ### FlashList: The Better Option
-
 ```javascript
 // Consider FlashList for better performance
 import { FlashList } from "@shopify/flash-list";
@@ -140,7 +137,6 @@ import { FlashList } from "@shopify/flash-list";
 ```
 
 ### Animation Performance
-
 ```javascript
 // ❌ JS-driven animation (blocks JS thread)
 Animated.timing(value, {
@@ -196,7 +192,6 @@ const Component = () => {
 ```
 
 ### Memory Leak Prevention
-
 ```javascript
 // ❌ Memory leak: uncleared interval
 useEffect(() => {
@@ -224,7 +219,6 @@ useEffect(() => {
 ```
 
 ### React Native Performance Checklist
-
 ```markdown
 ## Before Every List
 - [ ] Using FlatList or FlashList (NOT ScrollView)
@@ -251,7 +245,6 @@ useEffect(() => {
 ## 3. Flutter Performance
 
 ### 🚫 The #1 AI Mistake: setState Overuse
-
 ```dart
 // ❌ WRONG: setState rebuilds ENTIRE widget tree
 class BadCounter extends StatefulWidget {
@@ -312,7 +305,6 @@ class _GoodCounterState extends State<GoodCounter> {
 ```
 
 ### Targeted State Management
-
 ```dart
 // ❌ setState rebuilds whole tree
 setState(() => _value = newValue);
@@ -339,7 +331,6 @@ class TargetedState extends StatelessWidget {
 ```
 
 ### Riverpod/Provider Best Practices
-
 ```dart
 // ❌ WRONG: Reading entire provider in build
 Widget build(BuildContext context) {
@@ -355,7 +346,6 @@ Widget build(BuildContext context) {
 ```
 
 ### ListView Optimization
-
 ```dart
 // ❌ WRONG: ListView without builder (renders all)
 ListView(
@@ -380,7 +370,6 @@ ListView.separated(
 ```
 
 ### Image Optimization
-
 ```dart
 // ❌ WRONG: No caching, full resolution
 Image.network(url)
@@ -399,7 +388,6 @@ CachedNetworkImage(
 ```
 
 ### Dispose Pattern
-
 ```dart
 class MyWidget extends StatefulWidget {
   @override
@@ -461,307 +449,602 @@ class _MyWidgetState extends State<MyWidget> {
 
 ---
 
-## 4. Animation Performance (Both Platforms)
+## 4. Jetpack Compose Performance
 
-### The 60fps Imperative
+### 🚫 The #1 AI Mistake: Side Effects in Composition
+```kotlin
+// ❌ WRONG: Side effects directly in composition
+@Composable
+fun BadScreen(viewModel: MyViewModel) {
+    // This runs on EVERY recomposition!
+    viewModel.loadData() // CATASTROPHIC!
+    
+    val data by viewModel.data.collectAsState()
+    Text(data)
+}
 
-```
-Human eye detects:
-├── < 24 fps → "Slideshow" (broken)
-├── 24-30 fps → "Choppy" (uncomfortable)
-├── 30-45 fps → "Noticeably not smooth"
-├── 45-60 fps → "Smooth" (acceptable)
-├── 60 fps → "Buttery" (target)
-└── 120 fps → "Premium" (ProMotion devices)
-
-NEVER ship < 60fps animations.
-```
-
-### GPU vs CPU Animation
-
-```
-GPU-ACCELERATED (FAST):          CPU-BOUND (SLOW):
-├── transform: translate          ├── width, height
-├── transform: scale              ├── top, left, right, bottom
-├── transform: rotate             ├── margin, padding
-├── opacity                       ├── border-radius (animated)
-└── (Composited, off main)        └── box-shadow (animated)
-
-RULE: Only animate transform and opacity.
-Everything else causes layout recalculation.
+// Why it's catastrophic:
+// ├── Composition can happen multiple times per second
+// ├── loadData() called hundreds of times
+// ├── API hammered, battery drained
+// └── App becomes unusable
 ```
 
-### Animation Timing Guide
+### LaunchedEffect for Side Effects
+```kotlin
+// ✅ CORRECT: Side effects in LaunchedEffect
+@Composable
+fun GoodScreen(viewModel: MyViewModel) {
+    // Runs ONCE when composition enters
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
+    }
+    
+    val data by viewModel.data.collectAsState()
+    Text(data)
+}
 
-| Animation Type | Duration | Easing |
-|----------------|----------|--------|
-| Micro-interaction | 100-200ms | ease-out |
-| Standard transition | 200-300ms | ease-out |
-| Page transition | 300-400ms | ease-in-out |
-| Complex/dramatic | 400-600ms | ease-in-out |
-| Loading skeletons | 1000-1500ms | linear (loop) |
-
-### Spring Physics
-
-```javascript
-// React Native Reanimated
-withSpring(targetValue, {
-  damping: 15,      // How quickly it settles (higher = faster stop)
-  stiffness: 150,   // How "tight" the spring (higher = faster)
-  mass: 1,          // Weight of the object
-})
-
-// Flutter
-SpringSimulation(
-  SpringDescription(
-    mass: 1,
-    stiffness: 150,
-    damping: 15,
-  ),
-  start,
-  end,
-  velocity,
-)
-
-// Natural feel ranges:
-// Damping: 10-20 (bouncy to settled)
-// Stiffness: 100-200 (loose to tight)
-// Mass: 0.5-2 (light to heavy)
-```
-
----
-
-## 5. Memory Management
-
-### Common Memory Leaks
-
-| Source | Platform | Solution |
-|--------|----------|----------|
-| Timers | Both | Clear in cleanup/dispose |
-| Event listeners | Both | Remove in cleanup/dispose |
-| Subscriptions | Both | Cancel in cleanup/dispose |
-| Large images | Both | Limit cache, resize |
-| Async after unmount | RN | isMounted check or AbortController |
-| Animation controllers | Flutter | Dispose controllers |
-
-### Image Memory
-
-```
-Image memory = width × height × 4 bytes (RGBA)
-
-1080p image = 1920 × 1080 × 4 = 8.3 MB
-4K image = 3840 × 2160 × 4 = 33.2 MB
-
-10 4K images = 332 MB → App crash!
-
-RULE: Always resize images to display size (or 2-3x for retina).
-```
-
-### Memory Profiling
-
-```
-React Native:
-├── Flipper → Memory tab
-├── Xcode Instruments (iOS)
-└── Android Studio Profiler
-
-Flutter:
-├── DevTools → Memory tab
-├── Observatory
-└── flutter run --profile
-```
-
----
-
-## 6. Battery Optimization
-
-### Battery Drain Sources
-
-| Source | Impact | Mitigation |
-|--------|--------|------------|
-| **Screen on** | 🔴 Highest | Dark mode on OLED |
-| **GPS continuous** | 🔴 Very high | Use significant change |
-| **Network requests** | 🟡 High | Batch, cache aggressively |
-| **Animations** | 🟡 Medium | Reduce when low battery |
-| **Background work** | 🟡 Medium | Defer non-critical |
-| **CPU computation** | 🟢 Lower | Offload to backend |
-
-### OLED Battery Saving
-
-```
-OLED screens: Black pixels = OFF = 0 power
-
-Dark mode savings:
-├── True black (#000000) → Maximum savings
-├── Dark gray (#1a1a1a) → Slight savings
-├── Any color → Some power
-└── White (#FFFFFF) → Maximum power
-
-RULE: On dark mode, use true black for backgrounds.
-```
-
-### Background Task Guidelines
-
-```
-iOS:
-├── Background refresh: Limited, system-scheduled
-├── Push notifications: Use for important updates
-├── Background modes: Location, audio, VoIP only
-└── Background tasks: Max ~30 seconds
-
-Android:
-├── WorkManager: System-scheduled, battery-aware
-├── Foreground service: Visible to user, continuous
-├── JobScheduler: Batch network operations
-└── Doze mode: Respect it, batch operations
-```
-
----
-
-## 7. Network Performance
-
-### Offline-First Architecture
-
-```
-                    ┌──────────────┐
-                    │     UI       │
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │   Cache      │ ← Read from cache FIRST
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │   Network    │ ← Update cache from network
-                    └──────────────┘
-
-Benefits:
-├── Instant UI (no loading spinner for cached data)
-├── Works offline
-├── Reduces data usage
-└── Better UX on slow networks
-```
-
-### Request Optimization
-
-```
-BATCH: Combine multiple requests into one
-├── 10 small requests → 1 batch request
-├── Reduces connection overhead
-└── Better for battery (radio on once)
-
-CACHE: Don't re-fetch unchanged data
-├── ETag/If-None-Match headers
-├── Cache-Control headers
-└── Stale-while-revalidate pattern
-
-COMPRESS: Reduce payload size
-├── gzip/brotli compression
-├── Request only needed fields (GraphQL)
-└── Paginate large lists
-```
-
----
-
-## 8. Performance Testing
-
-### What to Test
-
-| Metric | Target | Tool |
-|--------|--------|------|
-| **Frame rate** | ≥ 60fps | Performance overlay |
-| **Memory** | Stable, no growth | Profiler |
-| **Cold start** | < 2s | Manual timing |
-| **TTI (Time to Interactive)** | < 3s | Lighthouse |
-| **List scroll** | No jank | Manual feel |
-| **Animation smoothness** | No drops | Performance monitor |
-
-### Test on Real Devices
-
-```
-⚠️ NEVER trust only:
-├── Simulator/emulator (faster than real)
-├── Dev mode (slower than release)
-├── High-end devices only
-
-✅ ALWAYS test on:
-├── Low-end Android (< $200 phone)
-├── Older iOS device (iPhone 8 or SE)
-├── Release/profile build
-└── With real data (not 10 items)
-```
-
-### Performance Monitoring Checklist
-
-```markdown
-## During Development
-- [ ] Performance overlay enabled
-- [ ] Watching for dropped frames
-- [ ] Memory usage stable
-- [ ] No console warnings about performance
-
-## Before Release
-- [ ] Tested on low-end device
-- [ ] Profiled memory over extended use
-- [ ] Cold start time measured
-- [ ] List scroll tested with 1000+ items
-- [ ] Animations tested at 60fps
-- [ ] Network tested on slow 3G
-```
-
----
-
-## 9. Quick Reference Card
-
-### React Native Essentials
-
-```javascript
-// List: Always use
-<FlatList
-  data={data}
-  renderItem={useCallback(({item}) => <MemoItem item={item} />, [])}
-  keyExtractor={useCallback(item => item.id, [])}
-  getItemLayout={useCallback((_, i) => ({length: H, offset: H*i, index: i}), [])}
-/>
-
-// Animation: Always native
-useNativeDriver: true
-
-// Cleanup: Always present
-useEffect(() => {
-  return () => cleanup();
-}, []);
-```
-
-### Flutter Essentials
-
-```dart
-// Widgets: Always const
-const MyWidget()
-
-// Lists: Always builder
-ListView.builder(itemBuilder: ...)
-
-// State: Always targeted
-ValueListenableBuilder() or ref.watch(provider.select(...))
-
-// Dispose: Always cleanup
-@override
-void dispose() {
-  controller.dispose();
-  super.dispose();
+// ✅ CORRECT: Run when key changes
+@Composable
+fun UserProfile(userId: String, viewModel: UserViewModel) {
+    LaunchedEffect(userId) { // Re-runs when userId changes
+        viewModel.loadUser(userId)
+    }
+    
+    val user by viewModel.user.collectAsState()
+    // Render user...
 }
 ```
 
-### Animation Targets
+### remember vs rememberSaveable
+```kotlin
+// ❌ WRONG: Recomputes on every recomposition
+@Composable
+fun BadList(items: List<Item>) {
+    val filteredItems = items.filter { it.isActive } // Recomputes always!
+    LazyColumn {
+        items(filteredItems) { ItemRow(it) }
+    }
+}
 
+// ✅ CORRECT: Cache computation with remember
+@Composable
+fun GoodList(items: List<Item>) {
+    val filteredItems = remember(items) {
+        items.filter { it.isActive } // Only when items change
+    }
+    LazyColumn {
+        items(filteredItems) { ItemRow(it) }
+    }
+}
+
+// ✅ EVEN BETTER: Use derivedStateOf for computed state
+@Composable
+fun BestList(items: List<Item>, query: String) {
+    val filteredItems by remember {
+        derivedStateOf {
+            items.filter { it.name.contains(query, ignoreCase = true) }
+        }
+    } // Only recomputes when items OR query changes
+    
+    LazyColumn {
+        items(filteredItems, key = { it.id }) { item ->
+            ItemRow(item)
+        }
+    }
+}
 ```
-Transform/Opacity only ← What to animate
-16.67ms per frame ← Time budget
-60fps minimum ← Target
-Low-end Android ← Test device
+
+### LazyColumn Optimization
+```kotlin
+// ❌ WRONG: No stable keys, unstable content
+@Composable
+fun BadList(items: List<Item>) {
+    LazyColumn {
+        items(items) { item -> // No key!
+            ItemRow(item = item) // Recreates on every change
+        }
+    }
+}
+
+// ✅ CORRECT: Stable keys + memoization
+@Composable
+fun GoodList(items: List<Item>) {
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = items,
+            key = { item -> item.id } // Stable key for animations
+        ) { item ->
+            ItemRow(
+                item = item,
+                modifier = Modifier.animateItemPlacement() // Smooth animations
+            )
+        }
+    }
+}
+
+// Item should be stable (data class with @Immutable/@Stable)
+@Immutable
+data class Item(
+    val id: String,
+    val name: String,
+    val description: String
+)
+```
+
+### State Hoisting vs Local State
+```kotlin
+// ❌ WRONG: Unnecessary state hoisting
+@Composable
+fun Parent() {
+    var expanded by remember { mutableStateOf(false) }
+    Child(expanded = expanded, onToggle = { expanded = !expanded })
+}
+
+@Composable
+fun Child(expanded: Boolean, onToggle: () -> Unit) {
+    // Only Child uses this state, why hoist?
+}
+
+// ✅ CORRECT: Keep state local when possible
+@Composable
+fun Parent() {
+    Child() // No state passing needed
+}
+
+@Composable
+fun Child() {
+    var expanded by remember { mutableStateOf(false) }
+    // Use expanded locally
+}
+
+// RULE: Hoist state ONLY when:
+// ├── Multiple composables need it
+// ├── Parent needs to control it
+// └── State needs to survive configuration changes (use rememberSaveable)
+```
+
+### Recomposition Optimization
+```kotlin
+// ❌ WRONG: Entire screen recomposes on every state change
+@Composable
+fun BadScreen(viewModel: MyViewModel) {
+    val state by viewModel.state.collectAsState()
+    
+    Column {
+        Header(state.title)
+        Content(state.items)
+        Footer(state.count)
+    } // All recompose when ANY state changes
+}
+
+// ✅ CORRECT: Separate state flows for independent sections
+@Composable
+fun GoodScreen(viewModel: MyViewModel) {
+    Column {
+        Header(viewModel.title.collectAsState().value)
+        Content(viewModel.items.collectAsState().value)
+        Footer(viewModel.count.collectAsState().value)
+    } // Each recomposes independently
+}
+
+// ✅ EVEN BETTER: Extract to separate composables
+@Composable
+fun BestScreen(viewModel: MyViewModel) {
+    Column {
+        HeaderSection(viewModel)
+        ContentSection(viewModel)
+        FooterSection(viewModel)
+    }
+}
+
+@Composable
+private fun HeaderSection(viewModel: MyViewModel) {
+    val title by viewModel.title.collectAsState()
+    Header(title) // Only this recomposes when title changes
+}
+```
+
+### Animation Performance
+```kotlin
+// ❌ WRONG: Animating offset (causes recomposition)
+@Composable
+fun BadAnimation() {
+    var offset by remember { mutableStateOf(0f) }
+    
+    LaunchedEffect(Unit) {
+        animate(
+            initialValue = 0f,
+            targetValue = 100f
+        ) { value, _ ->
+            offset = value // Recomposition on every frame!
+        }
+    }
+    
+    Box(Modifier.offset { IntOffset(offset.toInt(), 0) })
+}
+
+// ✅ CORRECT: Use graphicsLayer (no recomposition)
+@Composable
+fun GoodAnimation() {
+    val offset by animateFloatAsState(
+        targetValue = 100f,
+        animationSpec = spring()
+    )
+    
+    Box(
+        Modifier.graphicsLayer {
+            translationX = offset // GPU-accelerated, no recomposition!
+        }
+    )
+}
+
+// ✅ Compose animation APIs (all optimized):
+animateFloatAsState()      // Single value
+animateDpAsState()         // Dp values
+animateColorAsState()      // Colors
+updateTransition()         // Multiple values
+Animatable()               // Manual control
+```
+
+### Memory Management
+```kotlin
+// ❌ WRONG: No cleanup
+@Composable
+fun BadLocationTracker() {
+    val context = LocalContext.current
+    
+    LaunchedEffect(Unit) {
+        val locationManager = context.getSystemService<LocationManager>()
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                // Update UI
+            }
+        }
+        locationManager?.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            1000L,
+            0f,
+            listener
+        )
+        // Missing cleanup!
+    }
+}
+
+// ✅ CORRECT: DisposableEffect for cleanup
+@Composable
+fun GoodLocationTracker() {
+    val context = LocalContext.current
+    
+    DisposableEffect(Unit) {
+        val locationManager = context.getSystemService<LocationManager>()
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                // Update UI
+            }
+        }
+        
+        locationManager?.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            1000L,
+            0f,
+            listener
+        )
+        
+        onDispose {
+            locationManager?.removeUpdates(listener) // CLEANUP!
+        }
+    }
+}
+```
+
+### Jetpack Compose Performance Checklist
+```markdown
+## Before Every Composable
+- [ ] Side effects in LaunchedEffect/DisposableEffect (NOT in composition)
+- [ ] Expensive computations in remember/derivedStateOf
+- [ ] Data classes marked @Immutable or @Stable
+- [ ] Local state when possible (avoid unnecessary hoisting)
+
+## Before Every LazyColumn/LazyRow
+- [ ] Stable keys provided (key = { item.id })
+- [ ] Items are @Immutable data classes
+- [ ] Using contentPadding instead of outer padding
+- [ ] animateItemPlacement() for smooth animations
+
+## Before Every Animation
+- [ ] Using graphicsLayer (NOT offset/size modifiers)
+- [ ] Animating transform/opacity only
+- [ ] Using Compose animation APIs (not manual state)
+- [ ] Tested at 60fps
+
+## Before Any Release
+- [ ] No side effects in composition
+- [ ] DisposableEffect cleanup implemented
+- [ ] Layout Inspector checked for recomposition
+- [ ] Tested in release build
 ```
 
 ---
 
-> **Remember:** Performance is not optimization—it's baseline quality. A slow app is a broken app. Test on the worst device your users have, not the best device you have.
+## 5. Kotlin Multiplatform Performance
+
+### 🚫 The #1 AI Mistake: Blocking iOS Main Thread
+```kotlin
+// ❌ WRONG: Blocks iOS main thread (UI freezes)
+class BadRepository {
+    suspend fun getUsers(): List<User> {
+        return withContext(Dispatchers.Default) {
+            apiClient.fetchUsers() // Blocks iOS main thread!
+        }
+    }
+}
+
+// Why it fails on iOS:
+// ├── Kotlin/Native coroutines run on main thread by default
+// ├── Dispatchers.Default = main thread on iOS
+// ├── Network call blocks UI
+// └── iOS watchdog kills app
+
+// ✅ CORRECT: Use MainScope for iOS compatibility
+class GoodRepository {
+    private val scope = MainScope() // iOS-safe
+    
+    fun getUsers(onResult: (List<User>) -> Unit, onError: (Throwable) -> Unit) {
+        scope.launch {
+            try {
+                val users = apiClient.fetchUsers()
+                onResult(users)
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
+}
+```
+
+### Thread Safety with Immutability
+```kotlin
+// ❌ WRONG: Mutable shared state (crashes on iOS pre-new memory model)
+class BadViewModel {
+    var users: MutableList<User> = mutableListOf() // DANGER on iOS!
+    
+    fun addUser(user: User) {
+        users.add(user) // Can crash on iOS
+    }
+}
+
+// Why it fails:
+// ├── Kotlin/Native (pre-1.7) requires objects to be frozen when shared
+// ├── Mutable collections can't be frozen
+// ├── Accessing from different threads = crash
+// └── StateFlow helps but data must be immutable
+
+// ✅ CORRECT: Immutable data + StateFlow
+class GoodViewModel {
+    private val _users = MutableStateFlow<List<User>>(emptyList())
+    val users: StateFlow<List<User>> = _users.asStateFlow()
+    
+    fun addUser(user: User) {
+        _users.update { currentList ->
+            currentList + user // New list, not mutating
+        }
+    }
+}
+
+// Data classes should be immutable
+@Serializable
+data class User(
+    val id: String,
+    val name: String,
+    val email: String
+) // No var properties!
+```
+
+### iOS Framework Size Optimization
+```kotlin
+// build.gradle.kts
+
+kotlin {
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "shared"
+            
+            // ✅ Use static framework (smaller size)
+            isStatic = true
+            
+            // ✅ Export only needed dependencies
+            export("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+            // Don't export everything!
+            
+            // ✅ Strip debug symbols in release
+            freeCompilerArgs += listOf(
+                "-Xbinary=stripDebugInfo=true"
+            )
+        }
+    }
+}
+
+// Typical framework sizes:
+// ├── Debug: 20-50 MB (with symbols)
+// ├── Release (unoptimized): 10-20 MB
+// └── Release (optimized): 5-10 MB
+```
+
+### Database Performance (SQLDelight)
+```kotlin
+// ❌ WRONG: Individual queries in loop (N+1 problem)
+fun loadUsersWithPosts(): List<UserWithPosts> {
+    val users = database.userQueries.selectAll().executeAsList()
+    return users.map { user ->
+        val posts = database.postQueries.selectByUserId(user.id).executeAsList()
+        UserWithPosts(user, posts) // N queries!
+    }
+}
+
+// ✅ CORRECT: Single JOIN query
+// In .sq file:
+selectUsersWithPosts:
+SELECT 
+    User.*,
+    Post.id AS post_id,
+    Post.title AS post_title,
+    Post.content AS post_content
+FROM User
+LEFT JOIN Post ON User.id = Post.userId;
+
+fun loadUsersWithPosts(): List<UserWithPosts> {
+    return database.userQueries.selectUsersWithPosts()
+        .executeAsList()
+        .groupBy { it.id }
+        .map { (userId, rows) ->
+            UserWithPosts(
+                user = rows.first().toUser(),
+                posts = rows.mapNotNull { it.toPost() }
+            )
+        }
+}
+
+// ✅ CORRECT: Batch inserts with transaction
+fun insertUsers(users: List<User>) {
+    database.transaction {
+        users.forEach { user ->
+            database.userQueries.insert(user.id, user.name, user.email)
+        }
+    } // Single transaction = 10-100x faster
+}
+```
+
+### Network Performance (Ktor)
+```kotlin
+// ❌ WRONG: No connection pooling, sequential requests
+class BadApiClient {
+    private val client = HttpClient()
+    
+    suspend fun loadDashboard(): Dashboard {
+        val user = client.get("https://api.example.com/user").body<User>()
+        val posts = client.get("https://api.example.com/posts").body<List<Post>>()
+        val notifications = client.get("https://api.example.com/notifications").body<List<Notification>>()
+        return Dashboard(user, posts, notifications)
+    }
+}
+
+// ✅ CORRECT: Connection pooling + parallel requests
+class GoodApiClient {
+    private val client = HttpClient {
+        // Platform-specific engines
+        engine {
+            // Android: OkHttp
+            threadsCount = 4
+            pipelining = true
+        }
+        
+        install(HttpTimeout) {
+            requestTimeoutMillis = 10_000
+            connectTimeoutMillis = 5_000
+        }
+        
+        install(ContentNegotiation) {
+            json(Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            })
+        }
+        
+        install(Logging) {
+            level = if (BuildConfig.DEBUG) LogLevel.BODY else LogLevel.NONE
+        }
+    }
+    
+    suspend fun loadDashboard(): Dashboard = coroutineScope {
+        // Parallel requests
+        val userDeferred = async { client.get("https://api.example.com/user").body<User>() }
+        val postsDeferred = async { client.get("https://api.example.com/posts").body<List<Post>>() }
+        val notificationsDeferred = async { client.get("https://api.example.com/notifications").body<List<Notification>>() }
+        
+        Dashboard(
+            user = userDeferred.await(),
+            posts = postsDeferred.await(),
+            notifications = notificationsDeferred.await()
+        )
+    }
+}
+```
+
+### Memory Model Considerations
+```kotlin
+// Kotlin/Native Memory Models:
+// ├── Old (pre-1.7): Strict freezing, immutability required
+// └── New (1.7+): Similar to JVM, more flexible
+
+// Enable new memory model (gradle.properties):
+kotlin.native.binary.memoryModel=experimental
+
+// ✅ With new memory model:
+class ModernViewModel {
+    // Mutable state is now safe!
+    private val _state = MutableStateFlow(UiState.Loading)
+    val state = _state.asStateFlow()
+    
+    fun updateState(newState: UiState) {
+        _state.value = newState // Safe on both platforms
+    }
+}
+
+// ❌ With old memory model (Kotlin < 1.7):
+// Would need to freeze objects:
+data class User(val id: String, val name: String) {
+    init {
+        freeze() // Required for sharing between threads
+    }
+}
+```
+
+### Compose Multiplatform Performance
+```kotlin
+// Same performance principles as Jetpack Compose apply
+
+// ✅ CORRECT: Platform-specific optimization
+@Composable
+expect fun PlatformOptimizedImage(
+    url: String,
+    modifier: Modifier = Modifier
+)
+
+// androidMain
+@Composable
+actual fun PlatformOptimizedImage(url: String, modifier: Modifier) {
+    // Use Coil on Android
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(url)
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        modifier = modifier
+    )
+}
+
+// iosMain
+@Composable
+actual fun PlatformOptimizedImage(url: String, modifier: Modifier) {
+    // Use native iOS image loading
+    // (Compose Multiplatform doesn't have Coil for iOS yet)
+}
+```
+
+### Kotlin Multiplatform Performance Checklist
+```markdown
+## Before Every Shared Module
+- [ ] Immutable data classes (no var properties)
+- [ ] StateFlow for reactive state (not mutable collections)
+- [ ] Transactions for batch database operations
+- [ ] Parallel network requests (async/await)
+- [ ] New

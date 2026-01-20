@@ -46,77 +46,208 @@ allowed-tools: Read, Glob, Grep, Bash
 
 | Platform | File | Content | When to Read |
 |----------|------|---------|--------------|
-| **iOS** | [platform-ios.md](platform-ios.md) | Human Interface Guidelines, SF Pro, SwiftUI patterns | Building for iPhone/iPad |
-| **Android** | [platform-android.md](platform-android.md) | Material Design 3, Roboto, Compose patterns | Building for Android |
-| **Cross-Platform** | Both above | Platform divergence points | React Native / Flutter |
+| **iOS** | [platform-ios.md](../skills/mobile-design/platform-ios.md) | Building for iPhone/iPad |
+| **Android** | [platform-android.md](../skills/mobile-design/platform-android.md) | Building for Android |
+| **Kotlin Multiplatform** | [platform-kmp.md](../skills/mobile-design/platform-kmp.md) | **Shared logic, expect/actual, iOS integration, Compose Multiplatform** | **Building with KMP** |
+| **Cross-Platform** | All relevant above | Platform divergence points | React Native / Flutter / KMP |
 
-> 🔴 **If building for iOS → Read platform-ios.md FIRST!**
-> 🔴 **If building for Android → Read platform-android.md FIRST!**
-> 🔴 **If cross-platform → Read BOTH and apply conditional platform logic!**
+> 🔴 **If building with KMP → Read platform-kmp.md FIRST!**
+> 🔴 **KMP + iOS UI → Read platform-kmp.md + platform-ios.md**
+> 🔴 **KMP + Android UI → Read platform-kmp.md + platform-android.md**
+> 🔴 **Compose Multiplatform → Read platform-kmp.md + both platform files**
 
 ---
 
 ## ⚠️ CRITICAL: ASK BEFORE ASSUMING (MANDATORY)
 
 > **STOP! If the user's request is open-ended, DO NOT default to your favorites.**
+> **ALWAYS ask these questions FIRST before generating any code.**
 
-### You MUST Ask If Not Specified:
+### Core Decisions (MUST Ask If Not Specified)
 
-| Aspect | Ask | Why |
-|--------|-----|-----|
-| **Platform** | "iOS, Android, or both?" | Affects EVERY design decision |
-| **Framework** | "React Native, Flutter, or native?" | Determines patterns and tools |
-| **Navigation** | "Tab bar, drawer, or stack-based?" | Core UX decision |
-| **State** | "What state management? (Zustand/Redux/Riverpod/BLoC?)" | Architecture foundation |
-| **Offline** | "Does this need to work offline?" | Affects data strategy |
-| **Target devices** | "Phone only, or tablet support?" | Layout complexity |
+| Aspect | Question | Why | Follow-up Considerations |
+|--------|----------|-----|-------------------------|
+| **Platform** | "iOS, Android, or both?" | Affects EVERY design decision | - iOS minimum version (14+, 15+)? <br>- Android API level (21+, 24+)? <br>- Platform-specific features needed? |
+| **Framework** | "React Native, Flutter, Kotlin Multiplatform, or native?" | Determines patterns and tools | - Team expertise? <br>- Performance requirements? <br>- Code sharing vs platform optimization? |
+| **Navigation** | "Tab bar, drawer, or stack-based?" | Core UX decision | - Deep linking needed? <br>- Nested navigation? <br>- Modal flows? |
+| **State** | "What state management?" <br>(Zustand/Redux/Riverpod/BLoC/MobX) | Architecture foundation | - Global vs local state split? <br>- Persistence needed? <br>- DevTools requirements? |
+| **Offline** | "Does this need to work offline?" | Affects data strategy | - Full offline mode or just caching? <br>- Conflict resolution strategy? <br>- Background sync? |
+| **Target devices** | "Phone only, or tablet support?" | Layout complexity | - Foldables? <br>- Landscape orientation? <br>- Responsive breakpoints? |
 
-### ⛔ AI MOBILE ANTI-PATTERNS (YASAK LİSTESİ)
+### Additional Critical Questions (Ask When Relevant)
 
-> 🚫 **These are AI default tendencies that MUST be avoided!**
+| Aspect | Question | Why | Impact |
+|--------|----------|-----|--------|
+| **Authentication** | "What auth method?" <br>(OAuth, biometrics, SSO) | Security & UX baseline | Affects onboarding, session management, keychain usage |
+| **API Integration** | "REST, GraphQL, or gRPC?" | Data layer architecture | Determines networking library, caching strategy, type generation |
+| **Analytics** | "What tracking is needed?" | User insights & debugging | Firebase, Mixpanel, custom? GDPR compliance? |
+| **Push Notifications** | "Local, remote, or both?" | Engagement strategy | FCM/APNs setup, notification permissions flow |
+| **Payments** | "In-app purchases or external?" | Revenue model | App Store/Play Store policies, payment provider integration |
+| **Media** | "Camera, photos, video?" | Native permissions needed | Storage strategy, compression, upload handling |
+| **Location** | "Background tracking or on-demand?" | Battery & privacy impact | Permission strategy (always/when-in-use), geofencing |
+| **Theme** | "Light/dark mode support?" | Modern UX expectation | Color system, system preference detection |
+| **Internationalization** | "Multi-language support?" | Global reach | RTL support, locale management, date/number formatting |
+| **Testing** | "Unit, integration, E2E?" | Quality assurance | Detox/Appium for E2E, testing strategy, CI/CD pipeline |
 
-#### Performance Sins
+### Framework-Specific Questions
 
-| ❌ NEVER DO | Why It's Wrong | ✅ ALWAYS DO |
-|-------------|----------------|--------------|
-| **ScrollView for long lists** | Renders ALL items, memory explodes | Use `FlatList` / `FlashList` / `ListView.builder` |
-| **Inline renderItem function** | New function every render, all items re-render | `useCallback` + `React.memo` |
-| **Missing keyExtractor** | Index-based keys cause bugs on reorder | Unique, stable ID from data |
-| **Skip getItemLayout** | Async layout = janky scroll | Provide when items have fixed height |
-| **setState() everywhere** | Unnecessary widget rebuilds | Targeted state, `const` constructors |
-| **Native driver: false** | Animations blocked by JS thread | `useNativeDriver: true` always |
-| **console.log in production** | Blocks JS thread severely | Remove before release build |
-| **Skip React.memo/const** | Every item re-renders on any change | Memoize list items ALWAYS |
+#### React Native
+- "Expo or bare workflow?"
+- "New Architecture (Fabric/TurboModules)?"
+- "Monorepo setup?"
+- "TypeScript or JavaScript?"
 
-#### Touch/UX Sins
+#### Flutter
+- "Material or Cupertino design?"
+- "Code generation (freezed/json_serializable)?"
+- "Platform channels needed?"
+- "State: BLoC, Provider, Riverpod, or GetX?"
 
-| ❌ NEVER DO | Why It's Wrong | ✅ ALWAYS DO |
-|-------------|----------------|--------------|
-| **Touch target < 44px** | Impossible to tap accurately, frustrating | Minimum 44pt (iOS) / 48dp (Android) |
-| **Spacing < 8px between targets** | Accidental taps on neighbors | Minimum 8-12px gap |
-| **Gesture-only interactions** | Motor impaired users excluded | Always provide button alternative |
-| **No loading state** | User thinks app crashed | ALWAYS show loading feedback |
-| **No error state** | User stuck, no recovery path | Show error with retry option |
-| **No offline handling** | Crash/block when network lost | Graceful degradation, cached data |
-| **Ignore platform conventions** | Users confused, muscle memory broken | iOS feels iOS, Android feels Android |
+#### Kotlin Multiplatform
+- "iOS framework type (static/dynamic)?"
+- "Shared UI or logic only?"
+- "Compose Multiplatform for UI?"
+- "Ktor or other networking?"
 
-#### Security Sins
+#### Native (Jetpack Compose)
+- "Single Activity or multi-Activity?"
+- "ViewModel scoping strategy?"
+- "Modularization approach?"
+- "Hilt or Koin for DI?"
 
-| ❌ NEVER DO | Why It's Wrong | ✅ ALWAYS DO |
-|-------------|----------------|--------------|
-| **Token in AsyncStorage** | Easily accessible, stolen on rooted device | `SecureStore` / `Keychain` / `EncryptedSharedPreferences` |
-| **Hardcode API keys** | Reverse engineered from APK/IPA | Environment variables, secure storage |
-| **Skip SSL pinning** | MITM attacks possible | Pin certificates in production |
-| **Log sensitive data** | Logs can be extracted | Never log tokens, passwords, PII |
+### ⛔ DEFAULT TENDENCIES TO AVOID:
 
-#### Architecture Sins
+| AI Default Tendency | Why It's Bad | Think Instead |
+|---------------------|--------------|---------------|
+| **ScrollView for lists** | Memory explosion | Is this a list? → FlatList |
+| **Inline renderItem** | Re-renders all items | Am I memoizing renderItem? |
+| **AsyncStorage for tokens** | Insecure | Is this sensitive? → SecureStore |
+| **Same stack for all projects** | Doesn't fit context | What does THIS project need? |
+| **Skipping platform checks** | Feels broken to users | iOS = iOS feel, Android = Android feel |
+| **Redux for simple apps** | Overkill | Is Zustand enough? |
+| **Ignoring thumb zone** | Hard to use one-handed | Where is the primary CTA? |
 
-| ❌ NEVER DO | Why It's Wrong | ✅ ALWAYS DO |
-|-------------|----------------|--------------|
-| **Business logic in UI** | Untestable, unmaintainable | Service layer separation |
-| **Global state for everything** | Unnecessary re-renders, complexity | Local state default, lift when needed |
-| **Deep linking as afterthought** | Notifications, shares broken | Plan deep links from day one |
-| **Skip dispose/cleanup** | Memory leaks, zombie listeners | Clean up subscriptions, timers |
+---
+
+## 🚫 MOBILE ANTI-PATTERNS (NEVER DO THESE!)
+
+> **If you catch yourself doing ANY of these, STOP and refactor immediately.**
+
+### Performance Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| `ScrollView` for lists | `FlatList` / `FlashList` / `ListView.builder` | ScrollView renders ALL items at once (OOM crash) |
+| Inline `renderItem` function | `useCallback` + `React.memo` | Causes re-render of entire list on state change |
+| Missing `keyExtractor` | Stable unique ID from data | Without it, React can't optimize rerenders |
+| `useNativeDriver: false` | `useNativeDriver: true` (when possible) | JS thread animations drop frames at 60fps |
+| `console.log` in production | Remove before release | Massive performance impact on devices |
+| Heavy computation in render | `useMemo` / `useEffect` / background thread | Blocks UI thread → janky scrolling |
+| `setState()` for everything (Flutter) | Targeted state, `const` constructors | Rebuilds entire widget tree unnecessarily |
+| Deep widget trees | Extract widgets, use `const` | Flutter: Every level adds layout cost |
+| Large images without sizing | `resizeMode`, compression, CDN | Loads full resolution → memory spike |
+| Unoptimized re-renders | `React.memo`, `shouldComponentUpdate`, `key` | Wasted CPU cycles on unchanged components |
+
+### Touch/UX Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Touch target < 44px | Minimum 44pt (iOS) / 48dp (Android) | Accessibility + fat-finger errors |
+| Spacing < 8px | Minimum 8-12px gap | Cramped UI, accidental taps |
+| Gesture-only navigation | Provide visible button alternative | Discoverability + accessibility |
+| No loading state | ALWAYS show skeleton/spinner | Users think app froze |
+| No error state | Show error with retry option | Dead ends frustrate users |
+| No offline handling | Graceful degradation, cached data | Apps crash when network drops |
+| Platform-inconsistent UI | Follow HIG (iOS) / Material (Android) | Users notice "wrong" patterns instantly |
+| Blocking main thread | Async operations, background threads | App freezes → ANR (Android) / watchdog (iOS) |
+| No empty states | Show helpful message + action | Blank screens confuse users |
+| Missing ripple/haptic feedback | Provide tactile response | Feels unresponsive without it |
+
+### Security Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Token in `AsyncStorage` | `SecureStore` (Expo) / `Keychain` (iOS) / `EncryptedSharedPreferences` (Android) | AsyncStorage is plaintext, easily extractable |
+| Hardcode API keys | Environment variables (`.env`) | Keys leak in version control |
+| Skip SSL pinning | Pin certificates in production | Prevents MITM attacks |
+| Log sensitive data | Never log tokens, passwords, PII | Logs persist on device, visible in crash reports |
+| Trust user input | Validate + sanitize everything | SQL injection, XSS in WebViews |
+| Store passwords | Use OAuth / biometrics | Password managers exist for a reason |
+| HTTP in production | HTTPS only + ATS (iOS) / cleartext off (Android) | Network traffic visible on public WiFi |
+| Ignore permissions | Request at point of use, explain why | Users deny "creepy" permission requests |
+
+### Navigation Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Nested navigators without planning | Flat structure when possible | Navigation state becomes unpredictable |
+| `navigate()` without checking state | Use `navigation.canGoBack()` | App crashes on back press |
+| Passing large objects in params | Pass IDs, fetch in destination | Route params serialized → perf hit |
+| No deep linking setup | Configure universal links + URL schemes | Can't link to specific screens |
+| Ignoring back button (Android) | Handle `BackHandler` | Breaks user expectations |
+| Tab bar + drawer together | Pick one primary navigation | Confusing UX, conflicts |
+
+### State Management Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Global state for everything | Local state by default, lift when needed | Unnecessary re-renders across app |
+| Prop drilling 5+ levels | Context / state management library | Unmaintainable, fragile |
+| Mutating state directly | Immutable updates (`...spread`, `produce`) | React/Flutter can't detect changes |
+| No state persistence | Save critical state (auth, cart) | User loses progress on app kill |
+| Using Context for high-frequency updates | Zustand / Redux / Riverpod | Context re-renders all consumers |
+| Forgetting to cleanup | `useEffect` return, `dispose()` | Memory leaks, subscriptions pile up |
+
+### API/Data Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| No request timeout | Set timeout (10-30s) | Hangs forever on poor connection |
+| No retry logic | Exponential backoff + max retries | Temporary failures shouldn't kill UX |
+| Fetch on every render | Cache, debounce, or React Query | Hammers API, wastes data |
+| No pagination | Lazy load, infinite scroll | Loading 10k items crashes app |
+| Ignoring HTTP status codes | Handle 401, 403, 429, 500+ | Silent failures confuse users |
+| Trusting API response shape | Validate with Zod / type guards | Runtime errors from API changes |
+| No offline-first strategy | Cache data, sync when online | Apps feel broken without internet |
+
+### Build/Deployment Sins
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Commit secrets | `.gitignore` sensitive files | Leaked on GitHub → security breach |
+| Skip version bumping | Increment `versionCode` / `CFBundleVersion` | Can't deploy without it |
+| No crash reporting | Sentry, Crashlytics, Bugsnag | You won't know why users crash |
+| No analytics | Firebase, Mixpanel, Amplitude | Flying blind on user behavior |
+| Test only on emulator | Test on real devices | Emulators hide performance issues |
+| Ignore store guidelines | Read App Store / Play Store policies | Rejection delays launch by weeks |
+| No staged rollout | Gradual rollout (10% → 50% → 100%) | Catch critical bugs before full release |
+
+### React Native Specific
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Old React Navigation version | Stay on latest stable | Breaking changes pile up |
+| Ignoring new architecture | Plan migration to Fabric/TurboModules | Old arch deprecated soon |
+| Massive bundle size | Code splitting, lazy loading | Slow startup, app store limits |
+| `react-native-vector-icons` without linking | Use Expo vector-icons or link properly | Icons don't show |
+
+### Flutter Specific
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| `setState()` in StatelessWidget | Use StatefulWidget or state management | Runtime error |
+| Not using `const` constructors | Mark immutable widgets `const` | Rebuild optimizations |
+| Rebuilding entire screen | `Consumer` / `Selector` for targeted updates | Wastes CPU |
+| Ignoring widget lifecycle | `initState`, `dispose` correctly | Memory leaks, stale state |
+
+### Jetpack Compose Specific
+
+| ❌ NEVER | ✅ ALWAYS | Why |
+|----------|----------|-----|
+| Side effects in composition | Use `LaunchedEffect`, `DisposableEffect` | Unpredictable behavior |
+| Mutable state without `remember` | `remember { mutableStateOf() }` | State lost on recomposition |
+| Heavy work in `@Composable` | Move to ViewModel / coroutine | Janky UI |
+| Not using `derivedStateOf` | Derive computed values properly | Unnecessary recompositions |
 
 ---
 
@@ -200,7 +331,6 @@ For deep dive: [touch-psychology.md](touch-psychology.md)
 ## ⚡ Performance Principles (Quick Reference)
 
 ### React Native Critical Rules
-
 ```typescript
 // ✅ CORRECT: Memoized renderItem + React.memo wrapper
 const ListItem = React.memo(({ item }: { item: Item }) => (
@@ -231,7 +361,6 @@ const renderItem = useCallback(
 ```
 
 ### Flutter Critical Rules
-
 ```dart
 // ✅ CORRECT: const constructors prevent rebuilds
 class MyWidget extends StatelessWidget {
@@ -256,6 +385,420 @@ ValueListenableBuilder<int>(
 )
 ```
 
+### Kotlin Multiplatform Critical Rules
+```kotlin
+// ✅ CORRECT: Immutable data classes for thread safety
+@Serializable
+data class User(
+    val id: String,
+    val name: String,
+    val email: String
+) // Immutable by default!
+
+// ✅ CORRECT: StateFlow for reactive state (thread-safe)
+class UserRepository {
+    private val _users = MutableStateFlow<List<User>>(emptyList())
+    val users: StateFlow<List<User>> = _users.asStateFlow() // Read-only
+    
+    suspend fun loadUsers() {
+        val result = apiClient.getUsers()
+        _users.value = result // Thread-safe update
+    }
+}
+
+// ✅ CORRECT: Coroutines with proper scope
+class UserViewModel {
+    private val scope = MainScope() // For iOS compatibility
+    
+    fun loadData() {
+        scope.launch {
+            try {
+                repository.loadUsers()
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+    
+    fun onCleared() {
+        scope.cancel() // ALWAYS cleanup!
+    }
+}
+
+// ✅ CORRECT: Platform-specific optimization with expect/actual
+// commonMain
+expect fun <T> runOnBackground(block: suspend () -> T): T
+
+// androidMain
+actual fun <T> runOnBackground(block: suspend () -> T): T {
+    return runBlocking(Dispatchers.IO) { block() }
+}
+
+// iosMain
+actual fun <T> runOnBackground(block: suspend () -> T): T {
+    return runBlocking(Dispatchers.Default) { block() }
+}
+```
+
+### Jetpack Compose Critical Rules
+```kotlin
+// ✅ CORRECT: Stable keys for LazyColumn
+LazyColumn {
+    items(
+        items = userList,
+        key = { user -> user.id } // Stable key for animations
+    ) { user ->
+        UserRow(user = user)
+    }
+}
+
+// ✅ CORRECT: remember for expensive computations
+@Composable
+fun ExpensiveComponent(data: List<Int>) {
+    val processedData = remember(data) {
+        data.map { /* expensive operation */ }
+    } // Only recomputes when 'data' changes
+    
+    // Use processedData...
+}
+
+// ✅ CORRECT: derivedStateOf for computed values
+@Composable
+fun FilteredList(items: List<Item>, query: String) {
+    val filteredItems by remember {
+        derivedStateOf {
+            items.filter { it.name.contains(query, ignoreCase = true) }
+        }
+    } // Only recomputes when items or query changes
+    
+    LazyColumn {
+        items(filteredItems) { item ->
+            ItemRow(item)
+        }
+    }
+}
+
+// ✅ CORRECT: Avoid side effects in composition
+@Composable
+fun UserProfile(userId: String, viewModel: UserViewModel) {
+    // ❌ WRONG: Side effect in composition
+    // viewModel.loadUser(userId)
+    
+    // ✅ CORRECT: Use LaunchedEffect
+    LaunchedEffect(userId) {
+        viewModel.loadUser(userId)
+    }
+    
+    val user by viewModel.user.collectAsState()
+    // Render user...
+}
+
+// ✅ CORRECT: Cleanup with DisposableEffect
+@Composable
+fun LocationTracker() {
+    DisposableEffect(Unit) {
+        val listener = LocationListener()
+        locationManager.addListener(listener)
+        
+        onDispose {
+            locationManager.removeListener(listener) // CLEANUP!
+        }
+    }
+}
+```
+
+### Compose Multiplatform Critical Rules
+```kotlin
+// ✅ CORRECT: Platform-specific optimizations
+@Composable
+expect fun PlatformOptimizedList(
+    items: List<Item>,
+    onItemClick: (Item) -> Unit
+)
+
+// androidMain - Use LazyColumn
+@Composable
+actual fun PlatformOptimizedList(
+    items: List<Item>,
+    onItemClick: (Item) -> Unit
+) {
+    LazyColumn {
+        items(items, key = { it.id }) { item ->
+            ItemRow(item, onItemClick)
+        }
+    }
+}
+
+// iosMain - Use LazyColumn (same in Compose MP)
+@Composable
+actual fun PlatformOptimizedList(
+    items: List<Item>,
+    onItemClick: (Item) -> Unit
+) {
+    LazyColumn {
+        items(items, key = { it.id }) { item ->
+            ItemRow(item, onItemClick)
+        }
+    }
+}
+
+// ✅ CORRECT: Shared ViewModel with proper lifecycle
+class SharedViewModel {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    
+    private val _state = MutableStateFlow(UiState.Loading)
+    val state = _state.asStateFlow()
+    
+    fun onCleared() {
+        scope.cancel() // Called from platform-specific cleanup
+    }
+}
+
+// Android integration
+class MyActivity : ComponentActivity() {
+    private val viewModel = SharedViewModel()
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val state by viewModel.state.collectAsState()
+            MyScreen(state)
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.onCleared()
+    }
+}
+
+// iOS integration (Swift)
+class MyViewController: UIViewController {
+    private let viewModel = SharedViewModel()
+    
+    deinit {
+        viewModel.onCleared()
+    }
+}
+```
+
+---
+
+### Performance Comparison
+
+| Framework | Key Optimization | Why |
+|-----------|-----------------|-----|
+| **React Native** | `React.memo` + `useCallback` | Prevent unnecessary re-renders of list items |
+| **Flutter** | `const` constructors | Skip rebuild during parent widget updates |
+| **Jetpack Compose** | `remember` + `derivedStateOf` | Cache expensive computations |
+| **KMP (Shared Logic)** | Immutable data + `StateFlow` | Thread-safe reactive state |
+| **Compose Multiplatform** | Same as Jetpack Compose | Consistent optimization across platforms |
+
+---
+
+### Animation Performance
+```
+GPU-accelerated (FAST):     CPU-bound (SLOW):
+├── transform               ├── width, height
+├── opacity                 ├── top, left, right, bottom
+└── (use these ONLY)        ├── margin, padding
+                            └── (AVOID animating these)
+
+React Native:
+useNativeDriver: true // ✅ GPU
+useNativeDriver: false // ❌ JS thread
+
+Flutter:
+Transform.translate() // ✅ GPU
+Container(width: animated) // ❌ CPU
+
+Compose:
+Modifier.graphicsLayer { // ✅ GPU
+    translationX = animatedValue
+}
+Modifier.offset { // ❌ Recomposition
+    IntOffset(animatedValue.toInt(), 0)
+}
+```
+
+---
+
+### Memory Management
+```kotlin
+// ✅ KMP: Proper coroutine cleanup
+class Repository {
+    private val scope = CoroutineScope(SupervisorJob())
+    
+    fun fetchData() {
+        scope.launch {
+            // Async work
+        }
+    }
+    
+    fun dispose() {
+        scope.cancel() // CRITICAL: Cancel all coroutines
+    }
+}
+
+// ✅ React Native: Cleanup subscriptions
+useEffect(() => {
+    const subscription = api.subscribe(data => {
+        setState(data);
+    });
+    
+    return () => subscription.unsubscribe(); // CLEANUP!
+}, []);
+
+// ✅ Flutter: Dispose controllers
+class _MyWidgetState extends State<MyWidget> {
+    late final AnimationController _controller;
+    
+    @override
+    void initState() {
+        super.initState();
+        _controller = AnimationController(vsync: this);
+    }
+    
+    @override
+    void dispose() {
+        _controller.dispose(); // CLEANUP!
+        super.dispose();
+    }
+}
+
+// ✅ Compose: DisposableEffect
+@Composable
+fun MyComponent() {
+    DisposableEffect(Unit) {
+        val resource = createResource()
+        onDispose {
+            resource.release() // CLEANUP!
+        }
+    }
+}
+```
+
+---
+
+### Database Performance (KMP with SQLDelight)
+```kotlin
+// ✅ CORRECT: Batch operations
+fun insertUsers(users: List<User>) {
+    database.transaction {
+        users.forEach { user ->
+            queries.insertUser(user.id, user.name, user.email)
+        }
+    } // Single transaction = much faster
+}
+
+// ✅ CORRECT: Indexed queries
+// In .sq file
+CREATE TABLE User (
+    id TEXT PRIMARY KEY NOT NULL,
+    email TEXT NOT NULL,
+    createdAt INTEGER NOT NULL
+);
+
+CREATE INDEX user_email ON User(email); // Index for fast lookup
+
+// ❌ WRONG: Query in loop
+fun getUsers(): List<UserWithPosts> {
+    val users = queries.selectAllUsers().executeAsList()
+    return users.map { user ->
+        val posts = queries.selectPostsByUserId(user.id).executeAsList()
+        UserWithPosts(user, posts) // N+1 query problem!
+    }
+}
+
+// ✅ CORRECT: Join query
+// In .sq file
+selectUsersWithPosts:
+SELECT User.*, Post.*
+FROM User
+LEFT JOIN Post ON User.id = Post.userId;
+```
+
+---
+
+### Network Performance (KMP with Ktor)
+```kotlin
+// ✅ CORRECT: Connection pooling + timeout
+val client = HttpClient {
+    engine {
+        // Android (OkHttp)
+        threadsCount = 4
+        pipelining = true
+    }
+    
+    install(HttpTimeout) {
+        requestTimeoutMillis = 10_000
+        connectTimeoutMillis = 5_000
+    }
+    
+    install(ContentNegotiation) {
+        json(Json {
+            ignoreUnknownKeys = true // Don't parse unused fields
+        })
+    }
+}
+
+// ✅ CORRECT: Batch API calls
+suspend fun loadDashboard(): Dashboard {
+    // Parallel requests
+    val (user, posts, notifications) = coroutineScope {
+        val userDeferred = async { api.getUser() }
+        val postsDeferred = async { api.getPosts() }
+        val notificationsDeferred = async { api.getNotifications() }
+        
+        Triple(
+            userDeferred.await(),
+            postsDeferred.await(),
+            notificationsDeferred.await()
+        )
+    }
+    
+    return Dashboard(user, posts, notifications)
+}
+
+// ❌ WRONG: Sequential requests
+suspend fun loadDashboardSlow(): Dashboard {
+    val user = api.getUser() // Wait...
+    val posts = api.getPosts() // Wait...
+    val notifications = api.getNotifications() // Wait...
+    return Dashboard(user, posts, notifications)
+}
+```
+
+---
+
+### iOS-Specific KMP Performance
+```kotlin
+// ✅ CORRECT: Use MainScope for iOS compatibility
+class iOSViewModel {
+    private val scope = MainScope() // Works on iOS main thread
+    
+    fun loadData() {
+        scope.launch {
+            val data = repository.fetchData()
+            updateUI(data)
+        }
+    }
+}
+
+// ✅ CORRECT: Freeze immutable data for iOS (pre-new memory model)
+data class User(val id: String, val name: String) {
+    init {
+        freeze() // For Kotlin/Native < 1.6
+    }
+}
+
+// ✅ CORRECT: Use new memory model (Kotlin 1.6+)
+// In gradle.properties:
+kotlin.native.binary.memoryModel=experimental
+
+// No more freezing needed! 🎉
+```
+---
 ### Animation Performance
 
 ```

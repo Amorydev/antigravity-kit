@@ -1,23 +1,29 @@
 {
-  "name": "antigravity-kit",
-  "version": "2.0.0",
-  "description": "AI Agent templates - Skills, Agents, and Workflows for enhanced coding assistance",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vudovn/antigravity-kit.git"
-  },
-  "homepage": "https://github.com/vudovn/antigravity-kit#readme",
-  "bugs": {
-    "url": "https://github.com/vudovn/antigravity-kit/issues"
-  },
-  "keywords": [
-    "antigravity",
-    "ai",
-    "agent",
-    "gemini",
-    "skills",
-    "templates"
-  ],
-  "author": "vudovn",
-  "license": "MIT"
+    "name": "@amorydev/antigravity-kit",
+    "version": "1.0.0",
+    "description": "Antigravity Kit - AI Agent templates with Skills, Agents, and Workflows",
+    "main": "index.js",
+    "bin": {
+        "ag-kit": "./bin/cli.js"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "ai",
+        "agent",
+        "template",
+        "workflow",
+        "cli"
+    ],
+    "author": "Amorydev",
+    "license": "MIT",
+    "dependencies": {
+        "chalk": "^5.3.0",
+        "commander": "^12.0.0",
+        "fs-extra": "^11.2.0",
+        "inquirer": "^9.2.14",
+        "ora": "^8.0.1"
+    },
+    "type": "module"
 }

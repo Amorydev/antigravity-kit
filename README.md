@@ -10,13 +10,13 @@
 ## Quick Install
 
 ```bash
-npx @vudovn/ag-kit init
+npx @amorydev/antigravity-kit init
 ```
 
 Or install globally:
 
 ```bash
-npm install -g @vudovn/ag-kit
+npm install -g @amorydev/antigravity-kit
 ag-kit init
 ```
 
@@ -117,4 +117,4 @@ See [ARCHITECTURE.md](.agent/ARCHITECTURE.md) for full documentation on agents, 
 
 ## License
 
-MIT © Vudovn
+MIT © Amorydev

@@ -1,0 +1,21 @@
+# Source code
+web/
+src/
+node_modules/
+
+# Git
+.git
+.gitignore
+.github
+
+# System
+.DS_Store
+Thumbs.db
+
+# Config
+.editorconfig
+eslint.config.mjs
+tsconfig.json
+
+# Keep .agent folder!
+!/.agent
